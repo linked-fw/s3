@@ -35,7 +35,7 @@
   ],
   "dependencies": {
     "@_linked/core": "^2.2.1",
-    "@_linked/server": "~1.0",
+    "@_linked/server": "workspace:*",
     "@_linked/server-utils": "~1.0",
     "@aws-sdk/client-s3": "^3.159.0",
     "@aws-sdk/credential-providers": "^3.159.0",
@@ -55,6 +55,7 @@
   "exports": {
     ".": {
       "types": "./lib/esm/index.d.ts",
+      "development": "./src/index.ts",
       "import": "./lib/esm/index.js",
       "require": "./lib/cjs/index.js"
     },
