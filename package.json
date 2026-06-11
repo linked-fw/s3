@@ -61,11 +61,13 @@
     },
     "./*.js": {
       "types": "./lib/esm/*.d.ts",
+      "development": "./src/*.ts",
       "import": "./lib/esm/*.js",
       "require": "./lib/cjs/*.js"
     },
     "./*": {
       "types": "./lib/esm/*.d.ts",
+      "development": "./src/*.ts",
       "import": "./lib/esm/*.js",
       "require": "./lib/cjs/*.js"
     }
