@@ -9,3 +9,6 @@ yarn.lock
 # (.js alone is NOT ignored — some packages have legit .js test helpers/config.)
 src/**/*.d.ts
 src/**/*.js.map
+
+# Compiled .js belongs in lib/, never src/ (tsx-without-build artifacts).
+src/**/*.js
