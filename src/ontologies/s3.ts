@@ -3,14 +3,10 @@ import { linkedOntology } from '../package.js';
 import * as _this from './s3.js';
 
 export var loadData = () => {
-  if (typeof module !== 'undefined' && typeof exports !== 'undefined') {
-    return import('../data/s3.json');
-  } else {
-    //@ts-ignore
-    return import('../data/s3.json', { with: { type: 'json' } }).then(
-      (data) => data.default
-    );
-  }
+  //@ts-ignore
+  return import('../data/s3.json', { with: { type: 'json' } }).then(
+    (data) => data.default
+  );
 };
 
 export var ns = createNameSpace('http://lincd.org/ont/s3/');
