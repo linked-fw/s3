@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.1.0
+
+### Minor Changes
+
+- [`cb74e4c`](https://github.com/linked-cm/s3/commit/cb74e4c8e7bd4055b58e568b57aa74886a02b6cd) - ESM-only. Dropped the CommonJS build; ships ES modules only (`type: module`, no `require` export condition, no `lib/cjs`). Fixed the root `types` field. CJS consumers on Node 22+ can `require()` it (sync ESM) or use dynamic `import()`.
+
 ## 1.0.3
 
 ### Patch Changes
