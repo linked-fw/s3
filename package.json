@@ -36,8 +36,8 @@
   ],
   "dependencies": {
     "@_linked/core": "^2.2.1",
-    "@_linked/server": "workspace:*",
-    "@_linked/server-utils": "~1.0",
+    "@_linked/server": "^2.0.0",
+    "@_linked/server-utils": "^1.0",
     "@aws-sdk/client-s3": "^3.159.0",
     "@aws-sdk/credential-providers": "^3.159.0",
     "cron": "^3.1.7",
