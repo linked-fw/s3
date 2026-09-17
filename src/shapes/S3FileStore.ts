@@ -1,4 +1,11 @@
 import { IFileStore } from '@_linked/core/interfaces/IFileStore';
+import type {
+  ArtifactDestination,
+  ArtifactMetadata,
+  IArtifactStore,
+  PutArtifactInput,
+  PutArtifactResult,
+} from '@_linked/core/interfaces/IArtifactStore';
 import { Shape } from '@_linked/core/shapes/Shape';
 import mime from 'mime';
 import path from 'path';
@@ -16,7 +23,7 @@ export interface S3FileStoreConfig {
 const trimSlashes = (value = '') => value.replace(/^\/+|\/+$/g, '');
 const trimTrailingSlash = (value = '') => value.replace(/\/+$/g, '');
 
-export class S3FileStore extends Shape implements IFileStore {
+export class S3FileStore extends Shape implements IFileStore, IArtifactStore {
   static targetClass = s3.FileStore;
 
   label: string;
@@ -119,6 +126,48 @@ export class S3FileStore extends Shape implements IFileStore {
       return normalizedPath.substring(prefixedPath.length);
     }
     return normalizedPath;
+  }
+
+  describeDestination(): ArtifactDestination {
+    const bucket = this.resolveBucketName();
+    if (!bucket) {
+      throw new Error('Static artifact bucket is not configured');
+    }
+
+    return {
+      bucket,
+      prefix: this.prefix,
+      endpoint:
+        this.config.clientConfig?.endpoint ??
+        process.env.STATIC_S3_BUCKET_ENDPOINT ??
+        process.env.S3_BUCKET_ENDPOINT,
+      publicBaseUrl: this.accessURL || undefined,
+    };
+  }
+
+  async putArtifact(input: PutArtifactInput): Promise<PutArtifactResult> {
+    const key = this.applyPrefix(input.key);
+    const result = await this.bucket.putObjectOrThrow(key, input.body, {
+      ContentType: input.contentType,
+      CacheControl: input.cacheControl,
+      Metadata: {sha256: input.sha256},
+    });
+
+    return {key, eTag: result.ETag};
+  }
+
+  async statArtifact(key: string): Promise<ArtifactMetadata> {
+    const resolvedKey = this.applyPrefix(key);
+    const result = await this.bucket.headObject(resolvedKey);
+
+    return {
+      key: resolvedKey,
+      size: result.ContentLength ?? 0,
+      sha256: result.Metadata?.sha256,
+      contentType: result.ContentType,
+      cacheControl: result.CacheControl,
+      eTag: result.ETag,
+    };
   }
 
   /**

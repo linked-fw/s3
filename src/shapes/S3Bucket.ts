@@ -8,6 +8,7 @@ import {
   GetObjectCommandInput,
   HeadObjectCommand,
   HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   ListObjectsCommand,
   PutObjectCommand,
   S3Client,
@@ -155,6 +156,31 @@ export class S3Bucket extends Shape {
       console.log('Error', err);
     }
     return null;
+  }
+
+  /** Strict upload path for release artifacts. Unlike the legacy putObject,
+   * errors propagate to the caller so a release cannot report false success.
+   */
+  async putObjectOrThrow(
+    key: string,
+    value: StreamingBlobPayloadInputTypes,
+    options?: Omit<PutObjectCommandInput, 'Body' | 'Key' | 'Bucket'>
+  ): Promise<PutObjectCommandOutput> {
+    return this._client.send(
+      new PutObjectCommand({
+        Bucket: this.label,
+        Key: key,
+        Body: value,
+        ACL: 'public-read',
+        ...options,
+      })
+    );
+  }
+
+  async headObject(key: string): Promise<HeadObjectCommandOutput> {
+    return this._client.send(
+      new HeadObjectCommand({Bucket: this.label, Key: key})
+    );
   }
 
   /**
