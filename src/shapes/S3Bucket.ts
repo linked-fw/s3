@@ -64,7 +64,9 @@ export class S3Bucket extends Shape {
   private ensureKeyPromise: Map<string, Promise<string | void>> = new Map();
 
   constructor(n?: string | { id: string }, clientConfig?: S3ClientConfigInput) {
-    super(typeof n === 'string' ? null : n);
+    // A string is the external bucket label, not a Linked node reference.
+    // Pass undefined so Shape does not try to read an id from a null value.
+    super(typeof n === 'string' ? undefined : n);
     if (typeof n === 'string') {
       this.label = n;
     }
