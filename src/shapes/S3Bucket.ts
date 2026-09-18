@@ -8,6 +8,7 @@ import {
   GetObjectCommandInput,
   HeadObjectCommand,
   HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   ListObjectsCommand,
   PutObjectCommand,
   S3Client,
@@ -63,7 +64,9 @@ export class S3Bucket extends Shape {
   private ensureKeyPromise: Map<string, Promise<string | void>> = new Map();
 
   constructor(n?: string | { id: string }, clientConfig?: S3ClientConfigInput) {
-    super(typeof n === 'string' ? null : n);
+    // `undefined`, not `null`: Shape only skips assigning an id for undefined,
+    // and would read `.id` off null otherwise.
+    super(typeof n === 'string' ? undefined : n);
     if (typeof n === 'string') {
       this.label = n;
     }
@@ -225,6 +228,35 @@ export class S3Bucket extends Shape {
   }
 
   /**
+   * Read an object's metadata without downloading its contents.
+   *
+   * @param key The key of the object to head
+   * @returns The HeadObject response, or null when the object does not exist.
+   *   Any other error (permissions, network, no such bucket) is rethrown, so a
+   *   caller cannot mistake a broken connection for a missing file.
+   */
+  async headObject(key: string): Promise<HeadObjectCommandOutput | null> {
+    let bucketParams: HeadObjectCommandInput = {
+      Bucket: this.label,
+      Key: key,
+    };
+
+    try {
+      return await this._client.send(new HeadObjectCommand(bucketParams));
+    } catch (error) {
+      // v3 of the AWS SDK reports a missing object as NotFound; some
+      // S3-compatible endpoints surface the bare 404 instead.
+      if (
+        error?.name === 'NotFound' ||
+        error?.$metadata?.httpStatusCode === 404
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Ensure that the given key exists in the bucket, the file contents
    * will be an empty json object.
    *
@@ -282,25 +314,12 @@ export class S3Bucket extends Shape {
   }
 
   private async keyExists(key: string): Promise<boolean> {
-    let bucketParams: HeadObjectCommandInput = {
-      Bucket: this.label,
-      Key: key,
-    };
-
-    return new Promise<boolean>(async (resolve, reject) => {
-      //see if the object already exists
-      try {
-        await this._client.send(new HeadObjectCommand(bucketParams));
-        resolve(true);
-      } catch (error) {
-        if (error.name === 'NotFound') {
-          return false;
-        } else {
-          console.warn('Error checking existence of object: ' + error);
-          return false;
-        }
-      }
-    });
+    try {
+      return (await this.headObject(key)) !== null;
+    } catch (error) {
+      console.warn('Error checking existence of object: ' + error);
+      return false;
+    }
   }
 
   /**
