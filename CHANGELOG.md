@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.1.1
+
+### Patch Changes
+
+- [#12](https://github.com/linked-fw/s3/pull/12) [`9b5150c`](https://github.com/linked-fw/s3/commit/9b5150c57b87609ed6f456fd9fa80b60dbb76d66) Thanks [@flyon](https://github.com/flyon)! - Point `repository.url` at the linked-fw organisation, so npm provenance verification matches the repository that builds the package.
+
 ## 1.1.0
 
 ### Minor Changes
