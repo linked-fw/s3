@@ -169,12 +169,17 @@ export class S3FileStore extends Shape implements IFileStore {
     // Normalised in core so this store cannot drift from the other IFileStores.
     const opts = normalizeSaveFileOptions(options, preventDuplicates);
 
+    // Core reports an unspecified `preventDuplicates` as `undefined` and never
+    // invents a default, so each store applies its own. This store's default is
+    // to overwrite, which is what it has always done.
+    const shouldPreventDuplicates = opts.preventDuplicates ?? false;
+
     filePath = this.normalizePath(filePath);
 
     const mimeType = opts.mimeType ?? mime.getType(filePath);
 
     //first check if the object already exists
-    if (opts.preventDuplicates && (await this.fileExists(filePath))) {
+    if (shouldPreventDuplicates && (await this.fileExists(filePath))) {
       //if yes, use a more unique name based on the current unix timestamp
       filePath = `${path.dirname(filePath)}/${Date.now()}-${path.basename(
         filePath
@@ -236,11 +241,13 @@ export class S3FileStore extends Shape implements IFileStore {
    */
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      const bucket = await this.bucket.getObject(this.applyPrefix(filePath));
-      if (!bucket) {
-        return false;
-      }
-      return true;
+      // HeadObject, not GetObject: existence must not cost a full download of
+      // the very object `saveFile` is about to overwrite. Compared against
+      // `null` rather than truthiness, so a 0-byte object counts as existing.
+      const head = await this.bucket.headObject(
+        this.applyPrefix(this.normalizePath(filePath))
+      );
+      return head !== null;
     } catch (e) {
       return false;
     }
@@ -263,7 +270,12 @@ export class S3FileStore extends Shape implements IFileStore {
     }
 
     return {
-      size: head.ContentLength,
+      // S3 always reports ContentLength for an existing object, but the type is
+      // `number | undefined` and some S3-compatible endpoints omit it. FileStat
+      // requires a number, so an unreported size is read as 0: a caller doing
+      // verify-after-upload then sees a size mismatch and fails closed, which is
+      // the right outcome when the store cannot tell us how big the file is.
+      size: head.ContentLength ?? 0,
       // Only present when the object was uploaded with a checksum. Left
       // undefined otherwise: the caller must then treat the file as
       // "cannot verify". ETag is never a content hash (MD5 at best, and

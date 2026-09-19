@@ -277,48 +277,36 @@ export class S3Bucket extends Shape {
       Key: key,
     };
 
-    return new Promise<string | void>(async (resolve, reject) => {
-      //see if the object already exists
-      try {
-        await this._client.send(new HeadObjectCommand(bucketParams));
-        resolve();
-      } catch (error) {
-        if (error.name === 'NotFound') {
-          // Note with v3 AWS-SDK use error.code
-          //If the object does not exist, create it,
-          // with the content being an empty json object
-          try {
-            await this._client.send(
-              new PutObjectCommand({
-                ...bucketParams,
-                Body: JSON.stringify({}),
-              })
-            );
-            // console.log(
-            //   `Successfully created object "${bucketParams.Key}" in bucket ${bucketParams.Bucket}`,
-            // );
-            resolve();
-          } catch (err) {
-            if (err.name === 'NoSuchBucket') {
-              await this.createBucket();
-              await this._ensureKeyExists(key);
-              resolve();
-            }
-            reject('Error putting object: ' + err);
-          }
-        } else {
-          reject('Error checking existence of object: ' + error);
-        }
-      }
-    });
-  }
-
-  private async keyExists(key: string): Promise<boolean> {
+    //see if the object already exists. `headObject` owns the single
+    //"does this key exist" decision in this class, including the bare-404
+    //fallback that S3-compatible endpoints need.
+    let head: HeadObjectCommandOutput | null;
     try {
-      return (await this.headObject(key)) !== null;
+      head = await this.headObject(key);
     } catch (error) {
-      console.warn('Error checking existence of object: ' + error);
-      return false;
+      throw 'Error checking existence of object: ' + error;
+    }
+
+    if (head) {
+      return;
+    }
+
+    //If the object does not exist, create it,
+    // with the content being an empty json object
+    try {
+      await this._client.send(
+        new PutObjectCommand({
+          ...bucketParams,
+          Body: JSON.stringify({}),
+        })
+      );
+    } catch (err) {
+      if (err.name === 'NoSuchBucket') {
+        await this.createBucket();
+        await this._ensureKeyExists(key);
+        return;
+      }
+      throw 'Error putting object: ' + err;
     }
   }
 

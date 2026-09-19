@@ -84,7 +84,7 @@ describe('S3FileStore.saveFile', () => {
 
   it('renames on collision when preventDuplicates is set in the options', async () => {
     const [store, bucket] = createStore();
-    bucket.getObject.mockImplementation(async () => 'already here');
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 12 }));
 
     const url = await store.saveFile('uploads/photo.jpg', 'bytes', {
       preventDuplicates: true,
@@ -98,7 +98,7 @@ describe('S3FileStore.saveFile', () => {
 
   it('renames on collision when preventDuplicates is passed positionally', async () => {
     const [store, bucket] = createStore();
-    bucket.getObject.mockImplementation(async () => 'already here');
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 12 }));
 
     await store.saveFile('uploads/photo.jpg', 'bytes', 'image/jpeg', true);
 
@@ -110,11 +110,53 @@ describe('S3FileStore.saveFile', () => {
 
   it('overwrites by default, even when the file exists', async () => {
     const [store, bucket] = createStore();
-    bucket.getObject.mockImplementation(async () => 'already here');
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 12 }));
 
     await store.saveFile('uploads/photo.jpg', 'bytes');
 
     expect(bucket.putObject.mock.calls[0][0]).toBe('uploads/photo.jpg');
+  });
+
+  it('applies its own overwrite default when core reports preventDuplicates as undefined', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 12 }));
+
+    // Core deliberately never invents `false`; an options object that simply
+    // leaves the flag out must still overwrite, exactly like the two-argument
+    // call above.
+    await store.saveFile('uploads/photo.jpg', 'bytes', {
+      mimeType: 'image/jpeg',
+      preventDuplicates: undefined,
+    });
+
+    expect(bucket.putObject.mock.calls[0][0]).toBe('uploads/photo.jpg');
+  });
+
+  it('never downloads the object it is about to overwrite', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 12 }));
+
+    await store.saveFile('uploads/photo.jpg', 'bytes', {
+      preventDuplicates: true,
+    });
+
+    expect(bucket.getObject).not.toHaveBeenCalled();
+    expect(bucket.headObject).toHaveBeenCalledWith('uploads/photo.jpg');
+  });
+
+  it('renames on collision with a 0-byte object already at the path', async () => {
+    const [store, bucket] = createStore();
+    // An empty object exists: GetObject would return '' and read as "absent",
+    // HeadObject reports it as the file it is.
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 0 }));
+
+    await store.saveFile('uploads/photo.jpg', 'bytes', {
+      preventDuplicates: true,
+    });
+
+    expect(bucket.putObject.mock.calls[0][0]).toMatch(
+      /^uploads\/\d+-photo\.jpg$/
+    );
   });
 
   it('applies the store prefix and strips leading slashes', async () => {
@@ -126,6 +168,42 @@ describe('S3FileStore.saveFile', () => {
       'releases/1.2.3/assets/app.js'
     );
     expect(url).toBe('https://cdn.example.com/assets/app.js');
+  });
+});
+
+describe('S3FileStore.fileExists', () => {
+  it('asks HeadObject, not GetObject', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 5 }));
+
+    expect(await store.fileExists('uploads/photo.jpg')).toBe(true);
+    expect(bucket.getObject).not.toHaveBeenCalled();
+  });
+
+  it('reports a 0-byte object as existing', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({ ContentLength: 0 }));
+
+    // The GetObject implementation returned '' here and answered "false".
+    expect(await store.fileExists('uploads/empty.txt')).toBe(true);
+  });
+
+  it('reports a missing object as absent', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => null);
+
+    expect(await store.fileExists('uploads/missing.txt')).toBe(false);
+  });
+
+  it('applies the store prefix and strips leading slashes', async () => {
+    const [store, bucket] = createStore({ prefix: 'releases/1.2.3' });
+    bucket.headObject.mockImplementation(async () => null);
+
+    await store.fileExists('/assets/app.js');
+
+    expect(bucket.headObject).toHaveBeenCalledWith(
+      'releases/1.2.3/assets/app.js'
+    );
   });
 });
 
@@ -159,6 +237,28 @@ describe('S3FileStore.statFile', () => {
     // An ETag is an MD5 at best, so it must never stand in for a content hash.
     expect(stat.sha256).toBeUndefined();
     expect(stat.etag).toBe('"abc"');
+  });
+
+  it('reports size 0 when the endpoint omits ContentLength', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({ ETag: '"abc"' }));
+
+    const stat = await store.statFile('assets/app.js');
+
+    // FileStat.size is a required number; an unreported size must fail a
+    // verify-after-upload size check rather than read as undefined.
+    expect(stat.size).toBe(0);
+    expect(stat.etag).toBe('"abc"');
+  });
+
+  it('reports a 0-byte object as size 0', async () => {
+    const [store, bucket] = createStore();
+    bucket.headObject.mockImplementation(async () => ({
+      ContentLength: 0,
+      ETag: '"e"',
+    }));
+
+    expect((await store.statFile('assets/empty.txt')).size).toBe(0);
   });
 
   it('returns null when the object does not exist', async () => {
@@ -234,6 +334,37 @@ describe('S3Bucket.headObject', () => {
     });
 
     expect(await bucket.headObject('missing.txt')).toBeNull();
+  });
+
+  it('is the single existence check: ensureKeyExists creates the key on a bare 404', async () => {
+    const sent: string[] = [];
+    send.mockImplementation(async (command: any) => {
+      sent.push(command.constructor.name);
+      if (command.constructor.name === 'HeadObjectCommand') {
+        const error: any = new Error('404');
+        error.$metadata = { httpStatusCode: 404 };
+        throw error;
+      }
+      return {};
+    });
+
+    await bucket.ensureKeyExists('state.json');
+
+    // The old hand-rolled check only knew `NotFound`, so a bare 404 rejected
+    // instead of seeding the key.
+    expect(sent).toEqual(['HeadObjectCommand', 'PutObjectCommand']);
+  });
+
+  it('ensureKeyExists writes nothing when the key is already there', async () => {
+    const sent: string[] = [];
+    send.mockImplementation(async (command: any) => {
+      sent.push(command.constructor.name);
+      return { ContentLength: 2 };
+    });
+
+    await bucket.ensureKeyExists('state.json');
+
+    expect(sent).toEqual(['HeadObjectCommand']);
   });
 
   it('rethrows any other error', async () => {
