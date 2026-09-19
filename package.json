@@ -37,7 +37,7 @@
     "aws"
   ],
   "dependencies": {
-    "@_linked/core": "^2.2.1",
+    "@_linked/core": "^2.20.0",
     "@_linked/server": "^2.0.0",
     "@_linked/server-utils": "^1.0",
     "@aws-sdk/client-s3": "^3.159.0",
