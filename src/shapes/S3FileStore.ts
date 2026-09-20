@@ -1,4 +1,9 @@
-import { IFileStore } from '@_linked/core/interfaces/IFileStore';
+import {
+  FileStat,
+  IFileStore,
+  SaveFileOptions,
+  normalizeSaveFileOptions,
+} from '@_linked/core/interfaces/IFileStore';
 import { Shape } from '@_linked/core/shapes/Shape';
 import mime from 'mime';
 import path from 'path';
@@ -149,25 +154,32 @@ export class S3FileStore extends Shape implements IFileStore {
    * Save a file to the bucket
    * @param filePath The path to save the file to, relative to the endpoint
    * @param fileContent The contents of the file as a buffer
+   * @param options Save options, or a plain string read as the old positional mime type
+   * @param preventDuplicates Only honoured when `options` is a string
    * @returns The public URL of the file
    */
   async saveFile(
     filePath: string,
     fileContent: string | Uint8Array | Buffer | Readable,
-    mimeType?: string,
-    preventDuplicate: boolean = false
+    options?: SaveFileOptions | string,
+    preventDuplicates?: boolean
   ): Promise<string> {
     let bucket = this.bucket;
 
+    // Normalised in core so this store cannot drift from the other IFileStores.
+    const opts = normalizeSaveFileOptions(options, preventDuplicates);
+
+    // Core reports an unspecified `preventDuplicates` as `undefined` and never
+    // invents a default, so each store applies its own. This store's default is
+    // to overwrite, which is what it has always done.
+    const shouldPreventDuplicates = opts.preventDuplicates ?? false;
+
     filePath = this.normalizePath(filePath);
 
-    if (!mimeType) {
-      mimeType = mime.getType(filePath);
-    }
-    // console.log(`mimeType of ${filePath} is ${mimeType}`);
+    const mimeType = opts.mimeType ?? mime.getType(filePath);
 
     //first check if the object already exists
-    if (preventDuplicate && (await this.fileExists(filePath))) {
+    if (shouldPreventDuplicates && (await this.fileExists(filePath))) {
       //if yes, use a more unique name based on the current unix timestamp
       filePath = `${path.dirname(filePath)}/${Date.now()}-${path.basename(
         filePath
@@ -182,6 +194,10 @@ export class S3FileStore extends Shape implements IFileStore {
     let res = await bucket
       .putObject(key, fileContent, {
         ContentType: mimeType,
+        // Only send the optional headers when they were asked for, so the
+        // bucket's own defaults keep applying otherwise.
+        ...(opts.cacheControl ? { CacheControl: opts.cacheControl } : {}),
+        ...(opts.metadata ? { Metadata: opts.metadata } : {}),
       })
       .catch((err) => {
         console.error('Error saving file to S3:', err);
@@ -225,13 +241,48 @@ export class S3FileStore extends Shape implements IFileStore {
    */
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      const bucket = await this.bucket.getObject(this.applyPrefix(filePath));
-      if (!bucket) {
-        return false;
-      }
-      return true;
+      // HeadObject, not GetObject: existence must not cost a full download of
+      // the very object `saveFile` is about to overwrite. Compared against
+      // `null` rather than truthiness, so a 0-byte object counts as existing.
+      const head = await this.bucket.headObject(
+        this.applyPrefix(this.normalizePath(filePath))
+      );
+      return head !== null;
     } catch (e) {
       return false;
     }
+  }
+
+  /**
+   * Read the metadata of a stored file, for verify-after-upload.
+   *
+   * @param filePath The path of the file, relative to the endpoint. Normalised
+   *   and prefixed exactly as `saveFile` does, so a path that was just saved
+   *   can be handed straight back here.
+   * @returns The stat, or null when the object does not exist.
+   */
+  async statFile(filePath: string): Promise<FileStat | null> {
+    const key = this.applyPrefix(this.normalizePath(filePath));
+
+    const head = await this.bucket.headObject(key);
+    if (!head) {
+      return null;
+    }
+
+    return {
+      // S3 always reports ContentLength for an existing object, but the type is
+      // `number | undefined` and some S3-compatible endpoints omit it. FileStat
+      // requires a number, so an unreported size is read as 0: a caller doing
+      // verify-after-upload then sees a size mismatch and fails closed, which is
+      // the right outcome when the store cannot tell us how big the file is.
+      size: head.ContentLength ?? 0,
+      // Only present when the object was uploaded with a checksum. Left
+      // undefined otherwise: the caller must then treat the file as
+      // "cannot verify". ETag is never a content hash (MD5 at best, and
+      // something else entirely for multipart uploads), so it is reported
+      // separately and never as sha256.
+      sha256: head.ChecksumSHA256 ?? undefined,
+      etag: head.ETag,
+    };
   }
 }
