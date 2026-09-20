@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/linked-fw/s3.git"
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "packageManager": "npm@11.19.1",
   "linkedPackage": true,
   "type": "module",

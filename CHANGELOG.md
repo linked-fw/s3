@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.2.1
+
+### Patch Changes
+
+- [#9](https://github.com/linked-fw/s3/pull/9) [`ef9ab8f`](https://github.com/linked-fw/s3/commit/ef9ab8fd5d92fd785459addab58f5fe8078d69c6) Thanks [@flyon](https://github.com/flyon)! - Declare npm as the package manager for this repo and mark `package-lock.json` as a generated file.
+
 ## 1.2.0
 
 ### Minor Changes
