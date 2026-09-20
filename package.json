@@ -20,9 +20,9 @@
   "license": "ISC",
   "scripts": {
     "start": "npm exec linked dev",
-    "build": "rimraf ./lib && yarn build-esm && yarn copy-to-lib",
-    "build-esm": "echo \"compiling ESM\" && rimraf ./lib/esm && (yarn tsc -p tsconfig-esm.json || echo 'tsc returned non-zero; .js still emitted via noEmitOnError default')",
-    "copy-to-lib": "echo 'copying JSON assets to lib folder' && yarn copyfiles -u 1 'src/**/*.json' lib/esm"
+    "build": "rimraf ./lib && npm run build-esm && npm run copy-to-lib",
+    "build-esm": "echo \"compiling ESM\" && rimraf ./lib/esm && (tsc -p tsconfig-esm.json || echo 'tsc returned non-zero; .js still emitted via noEmitOnError default')",
+    "copy-to-lib": "echo 'copying JSON assets to lib folder' && copyfiles -u 1 'src/**/*.json' lib/esm"
   },
   "keywords": [
     "lincd",
