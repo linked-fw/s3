@@ -380,3 +380,13 @@ describe('S3Bucket.headObject', () => {
     );
   });
 });
+
+describe('S3FileStore is not a Shape', () => {
+  // Pins the decision from core 0e8c86e ("datasets are not shapes"), so a future
+  // refactor cannot silently re-inherit.
+  it('does not extend Shape', async () => {
+    const { Shape } = await import('@_linked/core/shapes/Shape');
+    const store = new S3FileStore('pin-test');
+    expect(store instanceof Shape).toBe(false);
+  });
+});
