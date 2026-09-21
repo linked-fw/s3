@@ -38,8 +38,8 @@
     "aws"
   ],
   "dependencies": {
-    "@_linked/core": "^2.20.0",
-    "@_linked/server": "^2.0.0",
+    "@_linked/core": "^2.21.0",
+    "@_linked/server": "^2.5.1",
     "@_linked/server-utils": "^1.0",
     "@aws-sdk/client-s3": "^3.159.0",
     "@aws-sdk/credential-providers": "^3.159.0",
@@ -47,7 +47,7 @@
     "mime": "2.6.0"
   },
   "devDependencies": {
-    "@_linked/cli": "^1.2",
+    "@_linked/cli": "^1.19.0",
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
     "@jest/globals": "^29.7.0",
