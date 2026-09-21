@@ -11,3 +11,4 @@ import './shapes/S3FileStore.js';
 
 //THEN COMPONENTS
 import './utils/accessUrl.js';
+import './utils/cors.js';

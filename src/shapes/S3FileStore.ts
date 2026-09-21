@@ -8,7 +8,16 @@ import { Shape } from '@_linked/core/shapes/Shape';
 import mime from 'mime';
 import path from 'path';
 import { s3 } from '../ontologies/s3.js';
-import { S3Bucket, type S3ClientConfigInput } from './S3Bucket.js';
+import {
+  S3Bucket,
+  type EnsureCorsResult,
+  type S3ClientConfigInput,
+} from './S3Bucket.js';
+import {
+  checkCorsAccess,
+  type CorsCheckOptions,
+  type CorsCheckResult,
+} from '../utils/cors.js';
 import type { Readable } from 'stream';
 
 export interface S3FileStoreConfig {
@@ -284,5 +293,39 @@ export class S3FileStore extends Shape implements IFileStore {
       sha256: head.ChecksumSHA256 ?? undefined,
       etag: head.ETag,
     };
+  }
+
+  /**
+   * Make sure the store's bucket serves its assets to the given page origins.
+   *
+   * A CDN-hosted release is loaded cross-origin by the browser, so the bucket
+   * needs an `Access-Control-Allow-Origin` rule or the dynamic-import chunks
+   * never load. Best effort: see {@link S3Bucket.ensureCors}.
+   */
+  async ensureCors(
+    origins: string[],
+    options: Parameters<S3Bucket['ensureCors']>[1] = {}
+  ): Promise<EnsureCorsResult> {
+    return this.bucket.ensureCors(origins, options);
+  }
+
+  /**
+   * Check, from the outside, that a stored file really is loadable from the
+   * given page origin.
+   *
+   * Uses only public read access, so this works even where the store's
+   * credentials cannot read bucket configuration — which is the usual case.
+   *
+   * @param filePath The path of the file, relative to the endpoint, exactly as
+   *   `saveFile` takes it.
+   * @param origin The page origin that will load it, e.g. `https://app.example`.
+   */
+  async checkAssetCors(
+    filePath: string,
+    origin: string,
+    options: CorsCheckOptions = {}
+  ): Promise<CorsCheckResult> {
+    const key = this.applyPrefix(this.normalizePath(filePath));
+    return checkCorsAccess(`${this.accessURL}/${key}`, origin, options);
   }
 }
