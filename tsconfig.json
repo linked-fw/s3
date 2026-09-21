@@ -17,6 +17,5 @@
     ]
   },
   "files": ["./src/index.ts"],
-  "include": ["./src/**/*.ts", "./src/backends.ts"],
-  "exclude": ["./src/shapes/S3QuadStore.ts", "./src/shapes/S3FrontendStore.ts", "./src/shapes/S3FrontendStoreProvider.ts"]
+  "include": ["./src/**/*.ts", "./src/backends.ts"]
 }

@@ -21,10 +21,10 @@
   "scripts": {
     "start": "npm exec linked dev",
     "build": "rimraf ./lib && npm run build-esm && npm run copy-to-lib",
-    "build-esm": "echo \"compiling ESM\" && rimraf ./lib/esm && (tsc -p tsconfig-esm.json || echo 'tsc returned non-zero; .js still emitted via noEmitOnError default')",
+    "build-esm": "echo \"compiling ESM\" && rimraf ./lib/esm && tsc -p tsconfig-esm.json",
     "copy-to-lib": "echo 'copying JSON assets to lib folder' && copyfiles -u 1 'src/**/*.json' lib/esm",
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest --config jest.config.cjs",
-    "typecheck": "npx tsc -p tsconfig-tests.json"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.cjs && npm run typecheck",
+    "typecheck": "tsc -p tsconfig-tests.json"
   },
   "keywords": [
     "lincd",
