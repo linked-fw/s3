@@ -16,6 +16,18 @@
       }
     ]
   },
-  "files": ["./src/index.ts"],
-  "include": ["./src/**/*.ts", "./src/backends.ts"]
+  "files": [
+    "./src/index.ts"
+  ],
+  "include": [
+    "./src/**/*.ts",
+    "./src/backends.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "./src/__tests__/**",
+    "./src/tests/**",
+    "./src/test-helpers/**"
+  ]
 }
