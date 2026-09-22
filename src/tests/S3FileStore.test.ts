@@ -389,4 +389,9 @@ describe('S3FileStore is not a Shape', () => {
     const store = new S3FileStore('pin-test');
     expect(store instanceof Shape).toBe(false);
   });
+
+  it('nor does S3Bucket', async () => {
+    const { Shape } = await import('@_linked/core/shapes/Shape');
+    expect(new S3Bucket('pin-test-bucket') instanceof Shape).toBe(false);
+  });
 });
