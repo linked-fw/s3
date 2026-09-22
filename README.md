@@ -105,6 +105,64 @@ if (head === null) {
 `fileExists` is built on it, so checking whether a path is taken no longer
 downloads the object that is about to be overwritten.
 
+## CORS for a CDN-hosted release
+
+`linked build-app` bakes Vite's `base` to the release URL, so a release served
+from a bucket loads its dynamic-import chunks from that bucket rather than from
+the app origin. Module scripts are **always** fetched in CORS mode, so without
+an `Access-Control-Allow-Origin` header on the bucket's responses those chunks
+simply fail to load — the first route that lazy-loads breaks, while the initial
+HTML looks fine.
+
+The rule to set is narrow: `GET` and `HEAD`, your app origins, `ETag` and the
+content headers exposed (range requests and cache validation need them), and a
+`MaxAgeSeconds` so browsers stop re-preflighting.
+
+```ts
+const result = await store.ensureCors(['https://app.example'], {
+  maxAgeSeconds: 3600,
+});
+console.log(result.status); // 'updated' | 'unchanged' | 'forbidden'
+```
+
+`ensureCors` reads the current configuration first and writes nothing when an
+equivalent rule is already in place. It keeps any unrelated rules the bucket
+already carries; pass `{replace: true}` to overwrite them instead. The lower
+level `S3Bucket.putBucketCors(rules)` and `S3Bucket.getBucketCors()` are there
+when you want the raw calls — `getBucketCors()` returns `null` rather than
+throwing when the bucket has no configuration at all.
+
+### Many providers will not let you set this from code
+
+**Expect `status: 'forbidden'`.** Object-scoped credentials — Cloudflare R2
+tokens in particular — can read and write objects but get a `403` on
+`GetBucketCors` and `PutBucketCors`. `ensureCors` reports that instead of
+throwing, and tells you to set the rule in the provider's dashboard (or with an
+account-level token). Treat it as best effort: on most deployments the CORS
+rule is a one-time dashboard setting, and what you actually want in CI is the
+check below.
+
+### Verifying
+
+Verification needs only public read access, so it works everywhere:
+
+```bash
+curl -sI -H 'Origin: https://app.example' https://cdn.example/releases/1.2.3/assets/app.js
+```
+
+Look for `access-control-allow-origin` in the response. Programmatically:
+
+```ts
+const check = await store.checkAssetCors('assets/app.js', 'https://app.example');
+if (!check.ok) {
+  throw new Error(check.message); // also carries the equivalent curl one-liner
+}
+```
+
+`checkCorsAccess(url, origin)` from `@_linked/s3/utils/cors.js` does the same
+against any URL, and never rejects — a network failure comes back as
+`{ok: false, error}`.
+
 ## Registering the store
 
 Registering stores by purpose (`LinkedFileStorage.setStore`, `getStore`,
