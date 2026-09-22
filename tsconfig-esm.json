@@ -7,9 +7,6 @@
     "moduleResolution": "bundler"
   },
   "exclude": [
-    "./src/shapes/S3QuadStore.ts",
-    "./src/shapes/S3FrontendStore.ts",
-    "./src/shapes/S3FrontendStoreProvider.ts",
     "./src/tests"
   ]
 }

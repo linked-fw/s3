@@ -4,10 +4,8 @@ import {
   SaveFileOptions,
   normalizeSaveFileOptions,
 } from '@_linked/core/interfaces/IFileStore';
-import { Shape } from '@_linked/core/shapes/Shape';
 import mime from 'mime';
 import path from 'path';
-import { s3 } from '../ontologies/s3.js';
 import {
   S3Bucket,
   type EnsureCorsResult,
@@ -30,9 +28,20 @@ export interface S3FileStoreConfig {
 const trimSlashes = (value = '') => value.replace(/^\/+|\/+$/g, '');
 const trimTrailingSlash = (value = '') => value.replace(/\/+$/g, '');
 
-export class S3FileStore extends Shape implements IFileStore {
-  static targetClass = s3.FileStore;
-
+/**
+ * A file store is not a Shape.
+ *
+ * This class used to `extends Shape` and declare `static targetClass = s3.FileStore`,
+ * but used nothing from `Shape`: no `this.id`, no `this.uri`, no `nodeShape`, no
+ * Shape statics, and no caller treats it as a Shape. `label` is its own field, not
+ * an inherited one. The `targetClass` was inert — it is only ever read by
+ * `@linkedShape`, which this class never carried, and `s3:FileStore` is not defined
+ * in this package's ontology data.
+ *
+ * Stores and datasets stopped being Shapes deliberately in core `0e8c86e`
+ * ("datasets are not shapes").
+ */
+export class S3FileStore implements IFileStore {
   label: string;
   private _bucket: S3Bucket;
   private readonly config: S3FileStoreConfig;
@@ -40,12 +49,11 @@ export class S3FileStore extends Shape implements IFileStore {
   public readonly accessURL: string;
 
   constructor(n: string | { id: string }, config: S3FileStoreConfig = {}) {
+    // The old `super()` minted `${DATA_ROOT}/s3-filestore/${n}` with a comment
+    // claiming the URI had to match between frontend and backend. Nothing ever
+    // read it — the only occurrence in the codebase was the `super()` call itself.
     if (typeof n === 'string') {
-      //set a fixed URI. This is important because the URI needs to match on the frontend and backend
-      super(`${process.env.DATA_ROOT}/s3-filestore/${n}`);
       this.label = n;
-    } else {
-      super(n);
     }
 
     this.config = config;

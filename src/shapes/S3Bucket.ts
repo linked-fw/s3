@@ -29,9 +29,6 @@ import {
   PutObjectCommandOutput,
 } from '@aws-sdk/client-s3/dist-types/commands/PutObjectCommand';
 import { StreamingBlobPayloadInputTypes } from '@smithy/types';
-import { Shape } from '@_linked/core/shapes/Shape';
-import { s3 } from '../ontologies/s3.js';
-import { linkedShape } from '../package.js';
 import { ListObjectsCommandInput } from '@aws-sdk/client-s3/dist-types/commands/ListObjectsCommand';
 
 export interface S3ClientConfigInput {
@@ -65,19 +62,36 @@ export const createS3Client = (config: S3ClientConfigInput = {}) =>
  */
 export const s3Client = createS3Client();
 
-@linkedShape
-export class S3Bucket extends Shape {
-  static targetClass = s3.Bucket;
-
+/**
+ * A bucket is not a Shape.
+ *
+ * This class used to `extends Shape` and carry `@linkedShape` with
+ * `static targetClass = s3.Bucket`, but used nothing from `Shape`: no `this.id`,
+ * no `this.uri`, no `nodeShape`, no Shape statics, no property decorators.
+ * `label` is its own field. The only inherited behaviour was a `super()` call
+ * that deliberately passed `undefined` for the string form — i.e. did nothing at
+ * all — and both construction sites pass a string.
+ *
+ * Dropping `extends Shape` forces dropping the decorator with it, since
+ * `linkedShape` is typed `<T extends typeof Shape>`. That removes S3Bucket's
+ * auto-minted NodeShape from the shape index, which is the one observable
+ * change — see the changeset. The shape was propertyless and `s3:Bucket` has no
+ * RDF definition in this package's ontology data, so nothing described it.
+ *
+ * Follows `S3FileStore`, `LocalFileStore` and `FusekiStore`, and core `0e8c86e`
+ * ("datasets are not shapes").
+ */
+export class S3Bucket {
   protected _client: S3Client;
   label: string;
 
   private ensureKeyPromise: Map<string, Promise<string | void>> = new Map();
 
+  /**
+   * `n` names the bucket. The `{id}` form is still accepted so existing callers
+   * keep compiling, but it is no longer stored as a node id — nothing read it.
+   */
   constructor(n?: string | { id: string }, clientConfig?: S3ClientConfigInput) {
-    // `undefined`, not `null`: Shape only skips assigning an id for undefined,
-    // and would read `.id` off null otherwise.
-    super(typeof n === 'string' ? undefined : n);
     if (typeof n === 'string') {
       this.label = n;
     }
