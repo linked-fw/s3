@@ -1,5 +1,5 @@
 import './types.js';
-import './ontologies/s3.js';
+import './ontologies/s3.register.js';
 
 //SHAPES FIRST
 import './shapes/S3Bucket.js';

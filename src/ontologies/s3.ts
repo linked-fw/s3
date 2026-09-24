@@ -1,6 +1,4 @@
 import { createNameSpace } from '@_linked/core/utils/NameSpace';
-import { linkedOntology } from '../package.js';
-import * as _this from './s3.js';
 
 export var loadData = () => {
   //@ts-ignore
@@ -40,5 +38,3 @@ export const s3 = {
   secret,
 };
 
-//Registers this ontology to LINCD.JS, so that data loading can be automated amongst other things
-linkedOntology(_this, ns, 's3', loadData, '../data/s3.json');
