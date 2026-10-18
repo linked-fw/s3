@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.6.3
+
+### Patch Changes
+
+- [#61](https://github.com/linked-fw/s3/pull/61) [`f717617`](https://github.com/linked-fw/s3/commit/f717617e61c563010841c8f54ab57a8f8f74311a) Thanks [@flyon](https://github.com/flyon)! - Drop the unused `@_linked/server` dependency. Nothing in the package imports it.
+
 ## 1.6.2
 
 ### Patch Changes
