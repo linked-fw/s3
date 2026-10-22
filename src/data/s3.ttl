@@ -1,0 +1,54 @@
+@prefix s3: <https://linked.cm/ont/s3/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <http://schema.org/> .
+
+s3:
+    a owl:Ontology ;
+    dcterms:description "Terms of the S3 object-storage package."@en ;
+    dcterms:title "Linked S3"@en ;
+    owl:versionInfo "1.6.3" .
+
+s3:Bucket
+    a owl:Class ;
+    rdfs:comment "An S3-compatible object-storage bucket, which S3Bucket wraps as a plain class."@en ;
+    rdfs:label "S3 bucket"@en .
+
+s3:FileStore
+    a owl:Class ;
+    rdfs:comment "A file store that keeps an app's uploaded files in an S3 bucket (S3FileStore)."@en ;
+    rdfs:label "S3 file store"@en .
+
+s3:FrontendStore
+    a owl:Class ;
+    rdfs:comment "A quad store for frontends backed by S3; its shape is commented out of the package."@en ;
+    rdfs:label "S3 frontend store"@en .
+
+s3:QuadStore
+    a owl:Class ;
+    rdfs:comment "A quad store that persists quads in an S3 bucket; its shape is commented out of the package."@en ;
+    rdfs:label "S3 quad store"@en .
+
+s3:bucket
+    a owl:ObjectProperty ;
+    rdfs:comment "The S3 bucket a store writes to."@en ;
+    rdfs:label "bucket"@en .
+
+s3:endpoint
+    a owl:DatatypeProperty ;
+    rdfs:comment "The URL of the S3-compatible service a store connects to."@en ;
+    rdfs:label "endpoint"@en .
+
+s3:key
+    a owl:DatatypeProperty ;
+    rdfs:comment "The access key id a store authenticates with."@en ;
+    rdfs:label "access key"@en .
+
+s3:secret
+    a owl:DatatypeProperty ;
+    rdfs:comment "The secret access key a store authenticates with."@en ;
+    rdfs:label "secret key"@en .
