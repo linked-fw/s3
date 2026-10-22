@@ -1,12 +1,5 @@
 import { createNameSpace } from '@_linked/core/utils/NameSpace';
 
-export var loadData = () => {
-  //@ts-ignore
-  return import('../data/s3.json', { with: { type: 'json' } }).then(
-    (data) => data.default
-  );
-};
-
 /**
  * The namespace of this ontology.
  *
