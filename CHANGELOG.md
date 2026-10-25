@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.7.1
+
+### Patch Changes
+
+- [#68](https://github.com/linked-fw/s3/pull/68) [`c5d3be1`](https://github.com/linked-fw/s3/commit/c5d3be1010ba4abc163dc408c84229407e6cb2aa) Thanks [@flyon](https://github.com/flyon)! - License: MIT (data under its original license)
+
 ## 1.7.0
 
 ### Minor Changes
