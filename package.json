@@ -45,7 +45,7 @@
     "@_linked/server-utils": "^1.15.0",
     "@aws-sdk/client-s3": "^3.159.0",
     "@aws-sdk/credential-providers": "^3.159.0",
-    "mime": "4.1.0"
+    "mime": "4.1.1"
   },
   "devDependencies": {
     "@_linked/cli": "^1.54.0",
