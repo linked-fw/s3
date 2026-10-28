@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 1.7.2
+
+### Patch Changes
+
+- [#73](https://github.com/linked-fw/s3/pull/73) [`0e38e78`](https://github.com/linked-fw/s3/commit/0e38e7867c63c6f9c0553c7b5b163507a953180a) Thanks [@flyon](https://github.com/flyon)! - `package.json` says what this package is in `"linked": {"kind": "library"}` instead of `"linkedPackage": true`, which the CLI and server no longer read.
+
 ## 1.7.1
 
 ### Patch Changes
