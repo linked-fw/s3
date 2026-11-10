@@ -30,8 +30,8 @@ the server would install a second, nested 2.x copy of it (with its own dependenc
 
 ## Follow-ups
 
-None in this repo. The consumer-side `npm ls @_linked/server` check is recorded in Create Now's
-plan 068 (step R2).
+None in this repo. The consumer-side `npm ls @_linked/server` check is recorded in the host app's
+plan for it (step R2).
 
 ## PRs
 
