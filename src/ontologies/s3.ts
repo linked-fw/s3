@@ -3,7 +3,7 @@ import { createNameSpace } from '@_linked/core/utils/NameSpace';
 /**
  * The namespace of this ontology.
  *
- * First-party ontologies live on linked.cm: `https://linked.cm/ont/{ontologySlug}/`, and a
+ * First-party ontologies live on linked.cm: `https://linked.cm/ont/{name}/`, and a
  * package's own ontology takes the package's publicSlug (`@_linked/s3` → `s3`), the same slug its
  * shapes would use under `https://linked.cm/shape/s3/`.
  *
