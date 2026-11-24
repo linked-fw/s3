@@ -1,5 +1,11 @@
 # @\_linked/s3
 
+## 2.0.1
+
+### Patch Changes
+
+- [#81](https://github.com/linked-fw/s3/pull/81) [`8e5a0d9`](https://github.com/linked-fw/s3/commit/8e5a0d90971c9fdb23bf59d4ac18dcb6128941a3) Thanks [@flyon](https://github.com/flyon)! - Depends on @_linked/server-utils ^2.0.0 (was ^1.15.0)
+
 ## 2.0.0
 
 ### Major Changes
