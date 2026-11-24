@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@_linked/core": "^3.0.0",
-    "@_linked/server-utils": "^1.15.0",
+    "@_linked/server-utils": "^2.0.0",
     "@aws-sdk/client-s3": "^3.159.0",
     "@aws-sdk/credential-providers": "^3.159.0",
     "mime": "4.1.0"
