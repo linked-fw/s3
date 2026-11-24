@@ -1,5 +1,17 @@
 # @\_linked/s3
 
+## 2.0.0
+
+### Major Changes
+
+- [#79](https://github.com/linked-fw/s3/pull/79) [`c9a3852`](https://github.com/linked-fw/s3/commit/c9a3852f875cf9e70613c2cffa7febcecde2e1ce) Thanks [@flyon](https://github.com/flyon)! - The ontology is registered by `src/ontologies/index.ts` (core's `registerOntologies`), which the package entry imports; the package registers no prefix (an app's prefix map, `linked.app.json`, holds the prefixes; the ontology's data suggests one). `src/package.ts` exports `registerOntologies` instead of `linkedOntology`. Requires the `@_linked/core` major with `registerOntologies`. Removed: `ontologies/s3.register` and the `dataFiles` and `loadData` exports of `ontologies/s3`.
+
+### Patch Changes
+
+- [#79](https://github.com/linked-fw/s3/pull/79) [`df0ed7c`](https://github.com/linked-fw/s3/commit/df0ed7c941bd0ae2b9ed1bce8ae656a149d26df9) Thanks [@flyon](https://github.com/flyon)! - The first-party namespace rule in the ontology's comment reads `https://linked.cm/ont/{name}/`, `{name}` being the ontology's name.
+
+- [#79](https://github.com/linked-fw/s3/pull/79) [`0e2ac58`](https://github.com/linked-fw/s3/commit/0e2ac5819976a4f034bb3a692ed509f2f7665a07) Thanks [@flyon](https://github.com/flyon)! - The ontology is declared in `package.json` `"linkedOntologies"` and its data states its suggested prefix and namespace (`vann:preferredNamespacePrefix`, `vann:preferredNamespaceUri`); the module stays hand-written (`"generated": false`). No import path or export changes.
+
 ## 1.7.2
 
 ### Patch Changes
