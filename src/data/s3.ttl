@@ -6,12 +6,15 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix schema: <http://schema.org/> .
+@prefix vann: <http://purl.org/vocab/vann/> .
 
 s3:
     a owl:Ontology ;
     dcterms:description "Terms of the S3 object-storage package."@en ;
     dcterms:title "Linked S3"@en ;
-    owl:versionInfo "1.7.0" .
+    owl:versionInfo "1.7.0" ;
+    vann:preferredNamespacePrefix "s3" ;
+    vann:preferredNamespaceUri "https://linked.cm/ont/s3/" .
 
 s3:Bucket
     a owl:Class ;
