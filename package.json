@@ -12,7 +12,7 @@
     "url": "git+https://github.com/linked-fw/s3.git"
   },
   "version": "2.0.1",
-  "packageManager": "npm@12.2.0",
+  "packageManager": "npm@12.2.3",
   "linked": {
     "kind": "library"
   },
